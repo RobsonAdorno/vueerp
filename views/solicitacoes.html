@@ -1,0 +1,372 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+</head>
+
+<style>
+
+.container-login100 {
+    width: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    background: #e9faff;
+}
+
+.wrap-login100 {
+    width: 100%;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 20px 0px rgba(0, 0, 0, 0.1);
+    padding: 50px;
+}
+body{
+    background: #e9faff;
+}
+
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+th{
+    text-align: center;
+}
+
+.t-border-none{
+    border: none;
+}
+
+
+
+</style>
+
+<body>
+
+    <nav class="navbar navbar-default" style="margin-bottom: 0px;" id="vue_nav">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="./index.html">ERP</a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="./index.html">Home</a></li>
+                <li><a href="./produtos.html" v-if="role == 'admin' || role == 'almoxarifado'">Produtos</a></li>
+                <li><a href="./cadastroProduto.html" v-if="role == 'admin' || role == 'almoxarifado'">Cadastrar Produto</a></li>
+    
+                <li class="active"><a href="./solicitacoes.html" v-if="role == 'admin' || role == 'compras'">Solicitações</a></li>
+    
+                <li><a href="./orcamentos.html" v-if="role == 'admin'">Orçamentos</a></li>
+                <li><a href="./cadastroUsuario.html" v-if="role == 'admin'">Cadastrar Usuario</a></li>
+            </ul>
+            
+            <div style="float: right;margin-top: 8px;" >
+                <a v-if="logged" v-on:click="loginLogout()" class="btn btn-default">Sair</a>
+                <a v-if="!logged" v-on:click="loginLogout()" class="btn btn-primary">Entrar</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="vue_solicitation">
+
+        <div class="container-login100">
+            <div class="wrap-login100">
+
+                <template v-if="budget_answered.length > 0">
+                    <h1 style="font-size: 25px;"> Orçamentos respondidos </h1>
+                    <table style="width: 100%;">
+                        <tr>
+                            <th>Produto</th>
+                            <th>Fornecedor</th>
+                            <th>Quantidade</th>
+                            <th>Valor</th>
+                            <th>Aprov/Reprov</th>
+                            <th>Comprar</th>
+                        </tr>
+                        <template v-for="budget in budget_answered">
+                            <tr>
+                                    <td style="text-align: center;">{{budget.nameProduct}}</td>
+                                    <td style="text-align: center;">{{budget.provider}}</td>
+                                    <td style="text-align: center;">{{budget.amount}}</td>
+                                    <td style="text-align: center;">{{budget.value}}</td>
+                                    <td style="text-align: center;">{{budget.status}}</td>
+
+                                    <td v-if="budget.status == 'a'" style="text-align: center;">
+                                        <button type="button" class="btn btn-primary"  v-on:click="finalizeBudget(budget)" > Gerar compra </button>
+                                    </td>
+                                    <td v-if="budget.status == 'n'" style="text-align: center;">
+                                        <button type="button" class="btn btn-primary" style="background-color: grey;border-color: grey;cursor: unset;" v-on:click="deleteBudget(budget._id)">Remover orçamento</button>
+                                    </td>
+
+                                </template>
+
+                            </tr>
+                        </template>
+                    </table>
+                </template>
+
+                <h1 style="font-size: 25px;"> Solicitações de Produtos </h1>
+
+                <template v-if="pending_products.length > 0">
+                    <table style="width: 100%;">
+                        <tr>
+                            <th>Almoxarife pedinte</th>
+                            <th>Produto</th>
+                            <th>Gerar orçamento</th>
+                        </tr>
+                        <template v-for="product in pending_products">
+                            <tr>
+                                <td>{{product.email}} </td>
+                                <td style="text-align: center;">{{product.nameProduct}}</td>
+
+                                    <td v-if="product.value" style="text-align: center;">
+                                        <button type="button" class="btn btn-primary "  style="background-color: grey;border-color: grey;cursor: unset;">Solicitação enviada</button>
+                                    </td>
+                                    <td v-else style="text-align: center;">
+                                        <button type="button" class="btn btn-primary"  v-on:click="budget(product)" >Gerar orçamento</button>
+                                    </td>
+
+                                </template>
+                            </tr>
+                        </template>
+                    </table>
+                </template>
+                <template v-else>
+                    Nenhum produto solicitado
+                </template>
+
+            </div>
+        </div>
+
+        <div class="modal fade" id="modal_budget" role="dialog">
+            <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" style="float: right;">&times;</button>
+                    <h4 class="modal-title"  style="text-align: center;">Gerar orçamento</h4>
+                    
+                </div>
+                <div class="modal-body">
+
+                    <table style="width: 100%;">
+                        <tr>
+                            <th class="t-border-none">Produto</th>
+                            <th class="t-border-none">Fornecedor</th>
+                            <th class="t-border-none">Quantidade</th>
+                            <th class="t-border-none">Valor</th>
+                        </tr>
+                        <tr>
+                            <td class="t-border-none" style="text-align: center;"> {{budget_solicitation.nameProduct}} </td>
+                            <td class="t-border-none" style="text-align: center;"> 
+                                <input class="input100" type="text" name="quantidade"  v-model="budget_solicitation.provider" style="width: 200px;">
+                            </td>
+                            <td class="t-border-none" style="text-align: center;"> 
+                                <input class="input100" type="text" name="quantidade"  v-model="budget_solicitation.amount" style="width: 50px;"> 
+                            </td>
+                            <td class="t-border-none" style="text-align: center;"> 
+                                <input class="input100" type="text" name="valor"  v-model="budget_solicitation.value" style="width: 50px;"> 
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" v-on:click="sendBudget">Enviar</button>
+                </div>
+                </div>
+                
+            </div>
+        </div>
+  
+    </div>
+
+    <script type="text/javascript" src="../static/js/jquery-3.4.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    
+    <script>
+        Vue.config.devtools = true;
+
+        vue_solicitation = new Vue({
+            el: '#vue_solicitation',
+            data: {
+                formatJASON:[],
+                pending_products: [],
+                budget_solicitation:{},
+                budget_answered:[],
+            },
+            mounted: function() {
+
+                this.init()
+
+            },
+            methods: {
+
+                init: function() {
+
+                    $.ajax({
+                        type: 'GET',
+                        url: "https://workerp.herokuapp.com/budgets",
+                        crossDomain: true,
+                        dataType: "json",
+                        success: function(data) {
+
+                            for(i=0; i < data.length ; i++){
+                                if( data[i].status != null){
+                                    if( data[i].status != 'f'){
+                                        vue_solicitation.budget_answered.push(data[i]);
+                                    }
+                                } else {
+                                    vue_solicitation.pending_products.push(data[i]);
+                                }
+                            }   
+                        }  
+                    });
+                },
+
+                budget: function(product) {
+
+                   this.budget_solicitation = product;
+
+                    $('#modal_budget').modal('show'); 
+
+                },
+
+                sendBudget: function(){
+
+                    var emailPurchases = localStorage.getItem("email");
+
+                    data_form = {
+                        email: this.budget_solicitation.email,
+                        idProduct: this.budget_solicitation.idProduct,
+                        nameProduct: this.budget_solicitation.nameProduct,
+                        provider: this.budget_solicitation.provider,
+                        emailPurchases: emailPurchases,
+                        amount: this.budget_solicitation.amount,
+                        value: this.budget_solicitation.value,
+                    };
+
+                    this.formatJASON.push(data_form)
+                
+                    $.ajax({
+                        type: 'PUT',
+                        url: "https://workerp.herokuapp.com/budgets/" + this.budget_solicitation._id,
+                        data: JSON.stringify(this.formatJASON),
+                        dataType: 'json',
+                        success: function (data) {
+                            alert("Orçamento enviado!");
+                            vue_solicitation.formatJASON = [];
+                        },
+                        error:function(e){
+                            alert("Algo deu errado!")
+                            vue_solicitation.formatJASON = [];
+                        },
+                        contentType: "application/json"
+                    });
+                },
+
+                deleteBudget: function(id){
+
+                    $.ajax({
+                        type: 'DELETE',
+                        url: "https://workerp.herokuapp.com/budgets/" + id,
+                        dataType: 'json',
+                        success: function (data) {
+                            alert("Orçamento deletado!");
+                        },
+                        error:function(e){
+                            alert("Algo deu errado!")
+                        },
+                        contentType: "application/json"
+                    });
+                },
+
+                finalizeBudget: function(budget){
+
+                    budget.status = "c";
+
+                    data_form = {
+                        status: budget.status,
+                        email: budget.email,
+                        idProduct: budget.idProduct,
+                        nameProduct: budget.nameProduct,
+                        provider: budget.provider,
+                        emailPurchases: budget.emailPurchases,
+                        amount: budget.amount,
+                        value: budget.value,
+
+                    };
+
+                    this.formatJASON.push(data_form)
+                
+                    $.ajax({
+                        type: 'PUT',
+                        url: "https://workerp.herokuapp.com/budgets/" + budget._id,
+                        data: JSON.stringify(this.formatJASON),
+                        dataType: 'json',
+                        success: function (data) {
+                            alert("Comprado");
+                            vue_solicitation.formatJASON = [];
+                        },
+                        error:function(e){
+                            alert("Algo deu errado!")
+                            vue_solicitation.formatJASON = [];
+                        },
+                        contentType: "application/json"
+                    });
+
+                }
+
+            }
+        });
+    </script>
+
+    <script>
+        vue_nav = new Vue({
+            el: '#vue_nav',
+            data: {
+                logged: false,
+                role: "",
+            },
+            mounted: function() {
+                var role = localStorage.getItem("role");
+                if(role != null){
+                    vue_nav.logged = true;
+                    this.role = role;
+                    this.logged = true;
+                }
+            },
+            methods: {
+                loginLogout: function() {
+                    if(this.logged == true){
+                      localStorage.removeItem('email');
+                      localStorage.removeItem('role');
+                      window.location.href="./login.html";
+                    } else {
+                      window.location.href="./login.html";
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

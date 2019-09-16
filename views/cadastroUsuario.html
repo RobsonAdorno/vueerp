@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+</head>
+
+<style>
+
+.container-login100 {
+    width: 100%;
+    min-height: 100vh;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    background: #e9faff;
+}
+* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+.wrap-login100 {
+    width: 500px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 20px 0px rgba(0, 0, 0, 0.1);
+    padding: 50px;
+}
+
+.login100-form-title {
+    display: block;
+    font-family: OpenSans-Regular;
+    font-size: 30px;
+    color: #555555;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.wrap-input100 {
+    width: 100%;
+    position: relative;
+    background-color: #fff;
+    border: 1px solid #e6e6e6;
+}
+
+.input100 {
+    display: block;
+    width: 100%;
+    font-family: OpenSans-Regular;
+    font-size: 15px;
+    color: #666666;
+    line-height: 1.2;
+}
+
+input.input100 {
+    height: 68px;
+    padding: 0 25px 0 25px;
+}
+
+.container-login100-form-btn {
+    width: 100%;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.login100-form-btn {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px;
+    width: 100%;
+    height: 60px;
+    background-color: #4272d7;
+    font-family: OpenSans-Regular;
+    font-size: 14px;
+    color: #fff;
+    line-height: 1.2;
+    text-transform: uppercase;
+    -webkit-transition: all 0.4s;
+    -o-transition: all 0.4s;
+    -moz-transition: all 0.4s;
+    transition: all 0.4s;
+}
+
+</style>
+
+<body>
+
+    <nav class="navbar navbar-default" style="margin-bottom: 0px;" id="vue_nav">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="./index.html">ERP</a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="./index.html">Home</a></li>
+                <li><a href="./produtos.html" v-if="role == 'admin' || role == 'almoxarifado'">Produtos</a></li>
+                <li><a href="./cadastroProduto.html" v-if="role == 'admin' || role == 'almoxarifado'">Cadastrar Produto</a></li>
+    
+                <li><a href="./solicitacoes.html" v-if="role == 'admin' || role == 'compras'">Solicitações</a></li>
+    
+                <li><a href="./orcamentos.html" v-if="role == 'admin'">Orçamentos</a></li>
+                <li class="active"><a  href="./cadastroUsuario.html" v-if="role == 'admin'">Cadastrar Usuario</a></li>
+            </ul>
+            
+            <div style="float: right;margin-top: 8px;" >
+                <a v-if="logged" v-on:click="loginLogout()" class="btn btn-default">Sair</a>
+                <a v-if="!logged" v-on:click="loginLogout()" class="btn btn-primary">Entrar</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="vue_registerUser">
+        <div class="container-login100">
+            <div class="wrap-login100 p-l-55 p-r-55 p-t-65 p-b-50">
+                <div class="login100-form validate-form">
+                    <span class="login100-form-title p-b-33" style="padding-bottom: 15px;">
+                    Cadastro
+                    </span>
+                    <div class="wrap-input100 validate-input" data-validate="Valid email is required: ex@abc.xyz">
+                        <input class="input100" type="text" name="email" placeholder="Email" v-model="user.email">
+                    </div>
+                    <div class="wrap-input100 rs1 validate-input" data-validate="Password is required">
+                        <input class="input100" type="password" name="pass" placeholder="Password" v-model="user.password">
+                    </div>
+                    <div class="wrap-input100 rs1 validate-input" >
+                        <input class="input100" type="text" name="name" placeholder="name" v-model="user.name">
+                    </div>
+                    <div class="wrap-input100 rs1 validate-input">
+                        <input class="input100" type="text" name="sector" placeholder="sector" v-model="user.sector">
+                    </div>
+                    <div class="wrap-input100 rs1 validate-input" >
+                        <input class="input100" type="text" name="phone" placeholder="phone" v-model="user.phone">
+                    </div>
+                    <div class="wrap-input100 rs1 validate-input" >
+                        <input class="input100" type="text" name="registration" placeholder="registration" v-model="user.registration">
+                    </div>
+
+                    <select v-model="profile" class="wrap-input100 rs1 validate-input" style="margin-top: 2px;height: 50px;">
+                        <option disabled value="">Selecione a role</option>
+                        <option>admin</option>
+                        <option>compras</option>
+                        <option>almoxarifado</option>
+                    </select>
+
+                    <div class="container-login100-form-btn m-t-20" style="padding-top: 15px;">
+                        <button class="login100-form-btn" v-on:click="login()">
+                        Cadastrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="../static/js/jquery-3.4.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    
+    <script>
+        Vue.config.devtools = true;
+
+        vue_registerUser = new Vue({
+            el: '#vue_registerUser',
+            data: {
+                formatJASON: [],
+                user:{ profiles:[] },
+                profile : []
+            },
+            mounted: function() {
+
+            },
+            methods: {
+
+                login: function() {
+
+                    this.user.profiles.push(this.profile)
+
+                    data_form = {
+                        email: this.user.email,
+                        password: this.user.password,
+                        name: this.user.name,
+                        sector: this.user.sector,
+                        registration: this.user.registration,
+                        phone: this.user.phone,
+                        profiles: this.user.profiles,
+                    };
+                    
+                    this.formatJASON.push(data_form)
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "http://workerp.herokuapp.com/employeeds",
+                        data: JSON.stringify(this.formatJASON),
+                        dataType: 'json',
+                        success: function (data) {
+                            alert('Cadastro realizado');
+                            window.location.href="./login.html";
+                        },
+                        error:function(e){
+                            alert("Algo deu errado!")
+                            vue_registerUser.formatJASON = [];
+                        },
+                        contentType: "application/json"
+                    });
+
+                }
+
+            }
+        });
+    </script>
+
+    
+    <script>
+        vue_nav = new Vue({
+            el: '#vue_nav',
+            data: {
+                logged: false,
+                role: "",
+            },
+            mounted: function() {
+                var role = localStorage.getItem("role");
+                if(role != null){
+                    vue_nav.logged = true;
+                    this.role = role;
+                    this.logged = true;
+                }
+            },
+            methods: {
+                loginLogout: function() {
+                    if(this.logged == true){
+                      localStorage.removeItem('email');
+                      localStorage.removeItem('role');
+                      window.location.href="./login.html";
+                    } else {
+                      window.location.href="./login.html";
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
